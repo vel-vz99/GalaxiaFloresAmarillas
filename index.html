@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxia de Flores Amarillas 🌻</title>
+    <style>
+        body, html {
+          margin: 0;
+          height: 100%;
+          background: #000;
+          overflow: hidden;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+          display: block;
+        }
+
+        /* Pantalla de Portada (Bienvenida) con estilo elegante */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #12121a 0%, #000000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 1s ease;
+            text-align: center;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        /* Flores decorativas en las esquinas y bordes */
+        .corner-flower {
+            position: absolute;
+            font-size: 2.5rem;
+            filter: drop-shadow(0 0 10px rgba(255, 230, 0, 0.6));
+            animation: floatFlower 4s ease-in-out infinite;
+            z-index: 2001;
+            user-select: none;
+        }
+        .fl-top-left { top: 30px; left: 40px; transform: rotate(-20deg); }
+        .fl-top-right { top: 30px; right: 40px; transform: rotate(20deg); animation-delay: 1s; }
+        .fl-bottom-left { bottom: 30px; left: 40px; transform: rotate(20deg); animation-delay: 2s; }
+        .fl-bottom-right { bottom: 30px; right: 40px; transform: rotate(-20deg); animation-delay: 1.5s; }
+        .fl-mid-left { top: 50%; left: 30px; transform: translateY(-50%) rotate(-10deg); animation-delay: 0.5s; }
+        .fl-mid-right { top: 50%; right: 30px; transform: translateY(-50%) rotate(10deg); animation-delay: 2.5s; }
+
+        @keyframes floatFlower {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        #welcome-screen h1 {
+            color: #fffef0;
+            font-family: 'Playfair Display', 'Georgia', serif;
+            font-size: clamp(2rem, 4.5vw, 3.2rem);
+            margin-bottom: 40px;
+            font-weight: 400;
+            font-style: italic;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.6), 
+                         0 0 25px rgba(255, 230, 0, 0.9), 
+                         0 0 45px rgba(255, 215, 0, 0.6);
+            max-width: 750px;
+            line-height: 1.4;
+            z-index: 2002;
+        }
+
+        #enter-btn {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #111;
+            border: none;
+            padding: 15px 45px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            z-index: 2002;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            letter-spacing: 1px;
+        }
+
+        #enter-btn:hover {
+            transform: scale(1.06);
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.9);
+        }
+
+        /* Controles y reproductor inferior */
+        .player {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 90%;
+          max-width: 600px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 18px;
+          border: 2px solid #f60;
+          border-radius: 999px;
+          background: rgba(0, 0, 0, 0.75);
+          backdrop-filter: blur(10px);
+          box-shadow: 0 0 20px rgba(255, 102, 0, 0.6), 0 0 40px rgba(255, 51, 0, 0.3);
+          z-index: 1000;
+          color: #fff;
+          font-size: 14px;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 1s ease;
+        }
+
+        .player.show {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .player button, .upload-label {
+          background: transparent;
+          border: none;
+          color: #fff;
+          font-size: 20px;
+          cursor: pointer;
+          filter: drop-shadow(0 0 6px #ff6600);
+          transition: transform .2s, filter .2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .player button:hover, .upload-label:hover {
+          transform: scale(1.15);
+          filter: drop-shadow(0 0 10px #ff3300);
+        }
+        .upload-label {
+          font-size: 18px;
+          padding: 4px;
+        }
+        #audioFile {
+          display: none;
+        }
+        .progress {
+          flex-grow: 1;
+          height: 12px;
+          background: rgba(255, 255, 255, .15);
+          border-radius: 999px;
+          overflow: hidden;
+          cursor: pointer;
+          position: relative;
+        }
+        .progress-bar {
+          height: 100%;
+          width: 0%;
+          background: linear-gradient(270deg, #f60, #f30, #f09, #f60);
+          background-size: 400% 400%;
+          border-radius: 999px;
+          box-shadow: 0 0 10px #f60;
+          animation: flowing 6s ease infinite;
+        }
+        @keyframes flowing {
+          0% { background-position: 0 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
+        .time {
+          min-width: 74px;
+          text-align: right;
+          font-size: 12px;
+          color: #fff;
+          text-shadow: 0 0 5px #f60;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de Portada Elegante con Flores Amarillas alrededor -->
+    <div id="welcome-screen">
+        <div class="corner-flower fl-top-left">🌻</div>
+        <div class="corner-flower fl-top-right">🌻</div>
+        <div class="corner-flower fl-mid-left">🌼</div>
+        <div class="corner-flower fl-mid-right">🌼</div>
+        <div class="corner-flower fl-bottom-left">🌻</div>
+        <div class="corner-flower fl-bottom-right">🌻</div>
+
+        <h1>🌻 Espero que tu día esté lleno de flores amarillas 🌻</h1>
+        <button id="enter-btn" onclick="iniciarExperiencia()">Entrar</button>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div class="player" id="player-bar">
+      <button id="play" title="Reproducir / Pausa">&#9654;&#65039;</button>
+      <div class="progress" id="progress"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="time" id="time">0:00 / 0:00</div>
+      <label class="upload-label" title="Subir otra canción (MP3)">
+        📁
+        <input type="file" id="audioFile" accept="audio/*">
+      </label>
+    </div>
+
+    <!-- Audio apuntando directamente al archivo local del repositorio -->
+    <audio id="bgAudio" src="flores-amarillas.mp3" preload="auto" loop></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
+    <script>
+        const welcomeScreen = document.getElementById("welcome-screen");
+        const playerBar = document.getElementById("player-bar");
+
+        const canvas = document.getElementById("c");
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+        renderer.setSize(innerWidth, innerHeight);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x02030b);
+
+        const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, .1, 5000);
+        let targetDist = 300, currentDist = 300, rotX = .22, rotY = 0;
+        let dragging = false, lastX = 0, lastY = 0;
+
+        function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+        function glowTexture(size = 512, a = "255,245,140", b = "255,120,0") {
+          const c = document.createElement("canvas"); c.width = c.height = size;
+          const x = c.getContext("2d");
+          const g = x.createRadialGradient(size / 2, size / 2, 4, size / 2, size / 2, size / 2);
+          g.addColorStop(0, `rgba(${a},1)`);
+          g.addColorStop(.25, `rgba(${a},.65)`);
+          g.addColorStop(.6, `rgba(${b},.25)`);
+          g.addColorStop(1, "rgba(0,0,0,0)");
+          x.fillStyle = g; x.fillRect(0, 0, size, size);
+          return new THREE.CanvasTexture(c);
+        }
+
+        function textTexture(text) {
+          const c = document.createElement("canvas"); c.width = 1024; c.height = 512;
+          const x = c.getContext("2d");
+          x.clearRect(0, 0, c.width, c.height);
+          const pad = 48, maxW = c.width - pad * 2;
+          let font = 62;
+
+          function wrap(size) {
+            x.font = "600 " + size + "px Georgia,serif";
+            const words = text.split(" ");
+            const lines = []; let line = "";
+            for (const w of words) {
+              const test = line ? line + " " + w : w;
+              if (x.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+              else line = test;
+            }
+            if (line) lines.push(line);
+            return lines;
+          }
+
+          let lines = wrap(font);
+          while (lines.length > 4 && font > 30) { font -= 4; lines = wrap(font); }
+          while (lines.some(l => x.measureText(l).width > maxW) && font > 26) { font -= 2; lines = wrap(font); }
+
+          x.textAlign = "center"; x.textBaseline = "middle";
+          x.fillStyle = "#fff8d0"; x.shadowColor = "#ffc928"; x.shadowBlur = 24;
+          const lh = font * 1.25;
+          const startY = c.height / 2 - (lines.length - 1) * lh / 2;
+          lines.forEach((l, i) => x.fillText(l, c.width / 2, startY + i * lh));
+          const tex = new THREE.CanvasTexture(c);
+          tex.needsUpdate = true;
+          return tex;
+        }
+
+        function flowerTexture(size = 256) {
+          const c = document.createElement("canvas"); c.width = c.height = size;
+          const x = c.getContext("2d"), m = size / 2;
+          for (let i = 0; i < 8; i++) {
+            x.save(); x.translate(m, m); x.rotate(i * Math.PI / 4);
+            x.beginPath(); x.ellipse(0, -42, 19, 46, 0, 0, Math.PI * 2);
+            x.fillStyle = i % 2 ? "#ffd83d" : "#ffef72"; x.fill(); x.restore();
+          }
+          x.beginPath(); x.arc(m, m, 21, 0, Math.PI * 2); x.fillStyle = "#7e4b11"; x.fill();
+          return new THREE.CanvasTexture(c);
+        }
+
+        /* ESTRELLAS */
+        function addStars(count, radius, color, size) {
+          const g = new THREE.BufferGeometry(), p = new Float32Array(count * 3);
+          for (let i = 0; i < count; i++) {
+            const r = radius * (.22 + .78 * Math.random()), t = Math.random() * Math.PI * 2,
+              f = Math.acos(2 * Math.random() - 1);
+            p[i * 3] = r * Math.sin(f) * Math.cos(t);
+            p[i * 3 + 1] = r * Math.cos(f);
+            p[i * 3 + 2] = r * Math.sin(f) * Math.sin(t);
+          }
+          g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+          scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+            color, size, transparent: true, opacity: .82, depthWrite: false
+          })));
+        }
+        addStars(3200, 1900, 0xffffff, 1.6);
+        addStars(500, 1750, 0x9e87ff, 2);
+        addStars(380, 1500, 0x57a9ff, 1.8);
+        addStars(260, 1400, 0xffdf63, 1.9);
+
+        /* NEBULOSAS */
+        const nebulaGroup = new THREE.Group(); scene.add(nebulaGroup);
+        function addNebula(x, y, z, s, c, o) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: glowTexture(768, c, c), transparent: true, opacity: o,
+            depthWrite: false, blending: THREE.AdditiveBlending
+          }));
+          sp.position.set(x, y, z); sp.scale.set(s, s, 1); nebulaGroup.add(sp);
+        }
+        addNebula(-700, 280, -600, 1050, "140,90,255", .32);
+        addNebula(650, -260, -480, 980, "60,140,255", .28);
+        addNebula(420, 500, 700, 860, "255,190,60", .22);
+        addNebula(-380, -420, 520, 820, "255,70,160", .2);
+
+        /* AGUJERO NEGRO */
+        const blackHole = new THREE.Group(); scene.add(blackHole);
+
+        const horizon = new THREE.Mesh(
+          new THREE.SphereGeometry(42, 96, 96),
+          new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 1 })
+        );
+        blackHole.add(horizon);
+
+        const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: glowTexture(900, "255,242,160", "150,40,255"),
+          transparent: true, opacity: .95, depthWrite: false,
+          blending: THREE.AdditiveBlending
+        }));
+        halo.scale.set(240, 240, 1); blackHole.add(halo);
+
+        const lightA = new THREE.PointLight(0xffbd48, 40, 420);
+        lightA.position.set(120, 70, 100); blackHole.add(lightA);
+
+        const lightB = new THREE.PointLight(0x754cff, 22, 300);
+        lightB.position.set(-110, -40, -130); blackHole.add(lightB);
+
+        function ringTexture(size = 1024, cA = "255,255,220", cB = "255,120,20") {
+          const c = document.createElement("canvas"); c.width = c.height = size;
+          const x = c.getContext("2d");
+          const g = x.createRadialGradient(size / 2, size / 2, size * .28, size / 2, size / 2, size / 2);
+          g.addColorStop(0, "rgba(0,0,0,0)");
+          g.addColorStop(.45, `rgba(${cA},1)`);
+          g.addColorStop(.72, `rgba(${cB},.9)`);
+          g.addColorStop(1, "rgba(0,0,0,0)");
+          x.fillStyle = g; x.fillRect(0, 0, size, size);
+          return new THREE.CanvasTexture(c);
+        }
+        function makeRing(inner, outer, opacity, cA, cB) {
+          const r = new THREE.Mesh(
+            new THREE.RingGeometry(inner, outer, 220),
+            new THREE.MeshBasicMaterial({
+              map: ringTexture(1024, cA, cB),
+              transparent: true, side: THREE.DoubleSide,
+              blending: THREE.AdditiveBlending, depthWrite: false, opacity
+            })
+          );
+          r.rotation.x = Math.PI / 2; return r;
+        }
+        const ring1 = makeRing(54, 78, 1, "255,255,235", "255,150,30");
+        const ring2 = makeRing(80, 104, .85, "255,225,120", "255,90,20");
+        const ring3 = makeRing(108, 140, .6, "255,180,90", "255,60,140");
+        const ring4 = makeRing(146, 182, .4, "180,150,255", "120,40,255");
+        ring1.rotation.z = .06; ring2.rotation.z = -.10; ring3.rotation.z = .18; ring4.rotation.z = -.22;
+        blackHole.add(ring1, ring2, ring3, ring4);
+
+        const innerGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: glowTexture(900, "255,240,180", "255,120,20"),
+          transparent: true, opacity: .9, depthWrite: false,
+          blending: THREE.AdditiveBlending
+        }));
+        innerGlow.scale.set(150, 150, 1); blackHole.add(innerGlow);
+
+        /* FLORES */
+        const flowers = new THREE.Group(); scene.add(flowers);
+        const fTex = flowerTexture();
+        for (let i = 0; i < 90; i++) {
+          const f = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: fTex, transparent: true, opacity: .84, depthWrite: false
+          }));
+          const a = Math.random() * Math.PI * 2, r = 160 + Math.random() * 1050, y = (Math.random() - .5) * 700;
+          f.position.set(Math.cos(a) * r, y, Math.sin(a) * r);
+          const s = 7 + Math.random() * 14; f.scale.set(s, s, 1);
+          f.userData = { baseY: y, phase: Math.random() * Math.PI * 2, speed: .25 + Math.random() * .55 };
+          flowers.add(f);
+        }
+
+        /* MENSAJES */
+        const messages = [
+          "🌻 Eres esa luz que hace más bonito mi universo.",
+          "💛 Si pudiera regalarte una galaxia, estaría llena de flores amarillas.",
+          "🌼 Entre millones de estrellas, siempre encontraría el camino hacia ti.",
+          "✨ Que nunca te falten motivos para sonreír.",
+          "🌻 Hay personas que hacen que hasta el universo parezca más bonito.",
+          "💛 Contigo, hasta las estrellas parecen florecer.",
+          "🌼 Tú eres mi rincón favorito de este universo.",
+          "✨ Cada flor amarilla me recuerda un poquito a ti.",
+          "🌻 Si el cielo tuviera flores, serían amarillas para ti.",
+          "💛 Eres la pequeña luz que nunca quiero perder.",
+          "🌼 Me gusta imaginar que alguna estrella lleva tu nombre.",
+          "✨ Donde estés tú, siempre parece haber un poco más de luz.",
+          "🌻 Te elegiría incluso entre todas las estrellas del universo.",
+          "💛 Tu sonrisa podría iluminar una galaxia entera.",
+          "🌼 Hay universos enormes, pero mi favorito es el que comparto contigo.",
+          "✨ Que este pequeño universo siempre te recuerde lo especial que eres.",
+          "🌻 Ojalá cada día encuentres una razón para florecer.",
+          "💛 Si pudiera guardar un momento para siempre, elegiría uno contigo.",
+          "🌼 Tú haces que lo cotidiano parezca extraordinario.",
+          "✨ Mi estrella favorita siempre termina encontrándote."
+        ];
+
+        const textGroup = new THREE.Group(); scene.add(textGroup);
+        messages.forEach((text, i) => {
+          const s = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: textTexture(text), transparent: true, depthWrite: false, opacity: .92
+          }));
+          const theta = i / messages.length * Math.PI * 2 + (Math.random() - .5) * .3;
+          const phi = Math.acos(2 * Math.random() - 1);
+          const radius = 180 + Math.random() * 240;
+          s.position.set(
+            radius * Math.sin(phi) * Math.cos(theta),
+            radius * Math.cos(phi),
+            radius * Math.sin(phi) * Math.sin(theta)
+          );
+          const sc = .85 + Math.random() * .35; s.scale.set(104 * sc, 52 * sc, 1);
+          s.userData = { theta, phi, radius, drift: .04 + Math.random() * .08, phase: Math.random() * Math.PI * 2 };
+          textGroup.add(s);
+        });
+
+        /* PARTICULAS */
+        const particles = new THREE.Group(); scene.add(particles);
+        for (let i = 0; i < 350; i++) {
+          const p = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: glowTexture(128, "255,220,120", "255,180,30"),
+            transparent: true, opacity: .35 + Math.random() * .5,
+            depthWrite: false, blending: THREE.AdditiveBlending
+          }));
+          const r = 120 + Math.random() * 900, a = Math.random() * Math.PI * 2;
+          p.position.set(Math.cos(a) * r, (Math.random() - .5) * 600, Math.sin(a) * r);
+          const s = 2 + Math.random() * 7; p.scale.set(s, s, 1);
+          p.userData = { phase: Math.random() * Math.PI * 2, speed: .4 + Math.random() };
+          particles.add(p);
+        }
+
+        /* CONTROLES DE CAMARA */
+        function down(e) {
+          dragging = true;
+          const p = e.touches ? e.touches[0] : e;
+          lastX = p.clientX; lastY = p.clientY;
+        }
+        function move(e) {
+          if (!dragging) return;
+          const p = e.touches ? e.touches[0] : e;
+          const dx = (p.clientX - lastX) / innerWidth;
+          const dy = (p.clientY - lastY) / innerHeight;
+          rotY -= dx * Math.PI * 3.2;
+          rotX = clamp(rotX - dy * 2.8, -1.48, 1.48);
+          lastX = p.clientX; lastY = p.clientY;
+        }
+        function up() { dragging = false; }
+        addEventListener("mousedown", down);
+        addEventListener("mousemove", move);
+        addEventListener("mouseup", up);
+        addEventListener("touchstart", down, { passive: true });
+        addEventListener("touchmove", move, { passive: true });
+        addEventListener("touchend", up, { passive: true });
+        addEventListener("wheel", e => {
+          targetDist = clamp(targetDist + e.deltaY * .22, 150, 620);
+        }, { passive: true });
+
+        /* HTML5 AUDIO PLAYER */
+        const audio = document.getElementById("bgAudio");
+        const playBtn = document.getElementById("play");
+        const progress = document.getElementById("progress");
+        const progressBar = document.getElementById("progress-bar");
+        const timeDisplay = document.getElementById("time");
+        const audioFileInput = document.getElementById("audioFile");
+
+        function iniciarExperiencia() {
+            welcomeScreen.style.opacity = '0';
+            setTimeout(() => {
+                welcomeScreen.style.display = 'none';
+                playerBar.classList.add('show');
+            }, 1000);
+
+            audio.play().then(() => {
+                playBtn.textContent = "⏸️";
+            }).catch(err => {
+                console.log("Reproducción automática bloqueada:", err);
+            });
+        }
+
+        playBtn.addEventListener("click", () => {
+          if (audio.paused) {
+            audio.play().then(() => {
+              playBtn.textContent = "⏸️";
+            }).catch(err => {
+              alert("No se pudo reproducir el audio. Verifica que 'flores-amarillas.mp3' esté en el repositorio.");
+            });
+          } else {
+            audio.pause();
+            playBtn.textContent = "▶️";
+          }
+        });
+
+        audio.addEventListener("timeupdate", () => {
+          if (!audio.duration) return;
+          const pct = (audio.currentTime / audio.duration) * 100;
+          progressBar.style.width = pct + "%";
+          const fmt = s => Math.floor(s / 60) + ":" + Math.floor(s % 60).toString().padStart(2, "0");
+          timeDisplay.textContent = fmt(audio.currentTime) + " / " + fmt(audio.duration);
+        });
+
+        progress.addEventListener("click", e => {
+          if (!audio.duration) return;
+          const rect = progress.getBoundingClientRect();
+          const pos = (e.clientX - rect.left) / rect.width;
+          audio.currentTime = pos * audio.duration;
+        });
+
+        audioFileInput.addEventListener("change", e => {
+          const file = e.target.files[0];
+          if (file) {
+            const fileURL = URL.createObjectURL(file);
+            audio.src = fileURL;
+            audio.play().then(() => {
+              playBtn.textContent = "⏸️";
+            });
+          }
+        });
+
+        /* BUCLE DE ANIMACION */
+        const clock = new THREE.Clock();
+        function tick() {
+          requestAnimationFrame(tick);
+          const t = clock.getElapsedTime();
+
+          ring1.rotation.z += .0024;
+          ring2.rotation.z -= .0016;
+          ring3.rotation.z += .0009;
+          ring4.rotation.z -= .0006;
+          horizon.rotation.y += .002;
+          horizon.rotation.x += .00035;
+
+          const pulse = 1 + Math.sin(t * 1.3) * .04;
+          halo.scale.set(240 * pulse, 240 * pulse, 1);
+          innerGlow.scale.set(150 * pulse, 150 * pulse, 1);
+          innerGlow.material.opacity = .75 + Math.sin(t * 1.8) * .18;
+
+          flowers.children.forEach(f => {
+            f.position.y = f.userData.baseY + Math.sin(t * f.userData.speed + f.userData.phase) * 4;
+          });
+
+          textGroup.children.forEach(s => {
+            const d = s.userData;
+            d.theta += d.drift * .00035;
+            const wobble = Math.sin(t * .65 + d.phase) * 5;
+            const r = d.radius + wobble;
+            s.position.x = r * Math.sin(d.phi) * Math.cos(d.theta);
+            s.position.y = r * Math.cos(d.phi);
+            s.position.z = r * Math.sin(d.phi) * Math.sin(d.theta);
+            s.material.opacity = .78 + Math.sin(t * .8 + d.phase) * .16;
+          });
+
+          particles.children.forEach(p => {
+            p.material.opacity = .22 + Math.abs(Math.sin(t * 1.2 + p.userData.phase)) * .45;
+          });
+
+          nebulaGroup.rotation.y += .00015;
+          nebulaGroup.rotation.x += .00004;
+
+          currentDist += (targetDist - currentDist) * .065;
+          const cx = Math.cos(rotX), sx = Math.sin(rotX), cy = Math.cos(rotY), sy = Math.sin(rotY);
+          camera.position.set(currentDist * sy * cx, currentDist * sx, currentDist * cy * cx);
+          camera.lookAt(0, 0, 0);
+
+          renderer.render(scene, camera);
+        }
+        tick();
+
+        addEventListener("resize", () => {
+          camera.aspect = innerWidth / innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(innerWidth, innerHeight);
+        });
+    </script>
+</body>
+</html>
