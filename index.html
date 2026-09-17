@@ -205,7 +205,7 @@
       </label>
     </div>
 
-    <!-- Audio apuntando directamente al archivo local del repositorio -->
+    <!-- Audio conectado directamente al archivo local del repositorio -->
     <audio id="bgAudio" src="flores-amarillas.mp3" preload="auto" loop></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
@@ -492,7 +492,7 @@
             audio.play().then(() => {
                 playBtn.textContent = "⏸️";
             }).catch(err => {
-                console.log("Reproducción automática bloqueada:", err);
+                console.log("Reproducción automática bloqueada por el navegador:", err);
             });
         }
 
@@ -501,7 +501,7 @@
             audio.play().then(() => {
               playBtn.textContent = "⏸️";
             }).catch(err => {
-              alert("No se pudo reproducir el audio. Verifica que 'flores-amarillas.mp3' esté en el repositorio.");
+              alert("No se pudo reproducir. Asegúrate de que el archivo 'flores-amarillas.mp3' está en el repositorio.");
             });
           } else {
             audio.pause();
